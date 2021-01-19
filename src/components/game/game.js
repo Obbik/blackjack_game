@@ -5,7 +5,10 @@ const Game = (props) => {
     return (
 
         <div>
-            {props.hands.croupier.map((card) => (<img src={card.image} />))}
+            <div>
+                {props.hands.croupier.map((card) => (<img src={card.image} />))}
+                <p>{(props.values.croupierTotalValue)}</p>
+            </div>
             <br />
             <br />
             <br />
@@ -17,10 +20,10 @@ const Game = (props) => {
             <br />
             <br />
             <br />
-            <br />
-            <br />
-            <br />
-            {props.hands.player.map((card) => (<img src={card.image} />))}
+            <div>
+                <p>{(props.values.playerTotalValue)}</p>
+                {props.hands.player.map((card) => (<img src={card.image} />))}
+            </div>
         </div>
     )
 }

@@ -44,7 +44,6 @@ const App = () => {
   }
   const getInitialCards = async (id) => {
     const { cards } = await drawCard(id, 4)
-    console.log(cards)
     setHand(prevState => (
       {
         ...prevState,
@@ -54,18 +53,19 @@ const App = () => {
 
   }
   const getCardValue = (value, actualPlayerTotalValue) => {
-    if (value == "JACK" || value == "QUEEN" || value == "king") {
+    if (value == "JACK" || value == "QUEEN" || value == "KING") {
       return 10
     }
     else if (value == "ACE") {
       let aceVal = 11
+      if (actualPlayerTotalValue === 11) return 10
       if (aceVal + actualPlayerTotalValue >= 21) {
         aceVal = 20 - actualPlayerTotalValue;
         aceVal = aceVal < 1 ? 1 : aceVal
-        return aceVal
+        return parseInt(aceVal)
       }
       else {
-        return aceVal
+        return parseInt(aceVal)
       }
     }
     else {
@@ -73,35 +73,58 @@ const App = () => {
     }
   }
 
-  const sumHandValues = (array) => {
-    for (let i = 0; i < array.length; i++) {
-      setValues(
-        [getCardValue(Object.values(array[i])[3], values.croupierTotalValue)]
-        // .reduce((a, b) => a + b, 0)
-      )
+  const sumHandValues = (hand) => {
+    let sum = 0
+    for (let i = 0; i < hand.length; i++) {
+      sum = sum + parseInt(getCardValue(Object.values(hand[i])[3], values.croupierTotalValue))
     }
+    return sum
   }
-  sumHandValues(hand.croupier)
-  // console.log(getCardValue("ACE", values.croupierTotalValue))
 
   useEffect(() => {
     getDeck()
   }, [])
+
   useEffect(() => {
     if (id) {
       getInitialCards(id)
     }
-
   }, [id])
 
+  useEffect(() => {
+    setValues(prevState => (
+      {
+        ...prevState,
+        croupierTotalValue: sumHandValues(hand.croupier),
+        playerTotalValue: sumHandValues(hand.player)
+      }))
+  }, [hand])
+
+  console.log(hand)
 
   return (
 
     <div className="App">
-
       {game ? <Game values={values} hands={hand} /> : null}
-      <button onClick={() => setGame(true)}>dil</button>
-    </div>
+
+      <div className="userButton">
+        <p>{values.wallet}</p>
+        <p>
+          <button onClick={() => setGame(true)}>dil</button>
+          <button onClick={async () => {
+            let card = await drawCard(id, 1)
+            console.log(card)
+            setHand(prevState => (
+              (
+                {
+                  ...prevState,
+                  player: [...prevState.player, card.cards[0]]
+                })
+            ))
+          }}> take</button>
+        </p>
+      </div>
+    </div >
   );
 }
 
