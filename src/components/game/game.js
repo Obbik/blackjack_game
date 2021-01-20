@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import Card from "../card/card"
 
 const Game = (props) => {
+
     return (
 
         <div>
@@ -9,7 +9,6 @@ const Game = (props) => {
                 {props.hands.croupier.map((card) => (<img src={card.image} />))}
                 <p>{(props.values.croupierTotalValue)}</p>
             </div>
-            <br />
             <br />
             <br />
             <br />

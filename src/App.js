@@ -13,16 +13,16 @@ const App = () => {
     })
 
   const [values, setValues] = useState({
+    win: null,
     wallet: 1000,
     round: 0,
     roundOver: true,
     croupierTotalValue: 0,
-    playerTotalValue: 0
+    playerTotalValue: 0,
+    game: false
 
   })
   const [id, setid] = useState()
-  const [game, setGame] = useState(false)
-
 
   const getDeck = async () => {
     try {
@@ -59,6 +59,7 @@ const App = () => {
     else if (value == "ACE") {
       let aceVal = 11
       if (actualPlayerTotalValue === 11) return 10
+      if (actualPlayerTotalValue[0] && actualPlayerTotalValue[1] == "ACE") return 21
       if (aceVal + actualPlayerTotalValue >= 21) {
         aceVal = 20 - actualPlayerTotalValue;
         aceVal = aceVal < 1 ? 1 : aceVal
@@ -81,9 +82,58 @@ const App = () => {
     return sum
   }
 
+  const startGame = (money) => {
+    setValues(prevState => ({ ...prevState, game: true, roundOver: false, win: null }))
+    values.roundOver ?
+      setValues(prevState => (
+        { ...prevState, wallet: prevState.wallet - money, round: prevState + 1 }))
+      :
+      setValues(prevState => (
+        { ...prevState, wallet: prevState.wallet }))
+  }
+
+
+  const checkWinOrLose = (score) => {
+
+    if (score - values.croupierTotalValue < 0) {
+      setValues(prevState => ({ ...prevState, win: false }))
+    }
+    else if (score - values.croupierTotalValue > 0) {
+      setValues(prevState => ({ ...prevState, win: true }))
+    }
+    else if (score - values.croupierTotalValue == 0) {
+
+      setValues(prevState => ({ ...prevState, win: "draw" }))
+
+    }
+  }
+
+
+  const endRound = async () => {
+    if (values.game === true) {
+      if (values.croupierTotalValue < 17) {
+        const { cards } = await drawCard(id, 1)
+        setHand(prevState => (
+          {
+            ...prevState,
+            croupier: [...prevState.croupier, cards[0]],
+          }))
+      }
+      setValues(prevState => ({ ...prevState, roundOver: true, round: prevState + 1 }))
+    }
+  }
+
   useEffect(() => {
     getDeck()
   }, [])
+  useEffect(() => {
+
+    if (values.playerTotalValue > 21) {
+      setValues(prevState => ({ ...prevState, win: false }))
+    }
+
+  }, [values.playerTotalValue])
+
 
   useEffect(() => {
     if (id) {
@@ -92,6 +142,9 @@ const App = () => {
   }, [id])
 
   useEffect(() => {
+    if (values.playerTotalValue > 21) {
+      setValues(prevState => ({ ...prevState, win: false }))
+    }
     setValues(prevState => (
       {
         ...prevState,
@@ -100,28 +153,44 @@ const App = () => {
       }))
   }, [hand])
 
-  console.log(hand)
-
+  const showResoultMessage = (win) => {
+    if (win === null) { return null }
+    if (win === true) { return <div>You Win! </div> }
+    if (win === false) { return <div>You Lose! </div> }
+    if (win === "draw") { return <div>Draw! </div> }
+  }
   return (
-
     <div className="App">
-      {game ? <Game values={values} hands={hand} /> : null}
-
+      <h1> {showResoultMessage(values.win)}</h1>
+      {values.game ? < Game values={values} hands={hand} /> : null}
       <div className="userButton">
         <p>{values.wallet}</p>
         <p>
-          <button onClick={() => setGame(true)}>dil</button>
+          <button
+            onClick={() => startGame(100)}>
+            startGame
+            </button>
           <button onClick={async () => {
-            let card = await drawCard(id, 1)
-            console.log(card)
-            setHand(prevState => (
-              (
-                {
-                  ...prevState,
-                  player: [...prevState.player, card.cards[0]]
-                })
-            ))
-          }}> take</button>
+            if (values.roundOver !== true) {
+              let card = await drawCard(id, 1)
+              setHand(prevState => (
+                (
+                  {
+                    ...prevState,
+                    player: [...prevState.player, card.cards[0]]
+                  })
+              ))
+            }
+
+          }}> Hit</button>
+
+          <button onClick={() => endRound().then(checkWinOrLose(values.playerTotalValue))}>
+            Stand
+          </button>
+
+          <button onClick={() => checkWinOrLose(values.playerTotalValue)}>
+            Dauble Down
+          </button>
         </p>
       </div>
     </div >
